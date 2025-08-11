@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
 function App() {
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
@@ -55,7 +57,7 @@ function App() {
       }
 
       // Fetch actual video info from backend
-      const response = await axios.post('http://localhost:3001/api/video-info', { url });
+      const response = await axios.post(`${API_URL}/api/video-info`, { url });
 
       setVideoInfo({
         title: response.data.title,
@@ -102,7 +104,7 @@ function App() {
       setDownloadProgress(prev => ({ ...prev, [progressKey]: 10 }));
 
       const response = await axios.post(
-        `http://localhost:3001/api/download-${format}`,
+        `${API_URL}/api/download-${format}`,
         { url },
         {
           responseType: 'blob',
