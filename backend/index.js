@@ -12,12 +12,24 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 const app = express();
 const port = 3001;
 
-app.use(cors());
+// Configure CORS for production
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.com'] // Replace with your frontend domain
+    : 'http://localhost:3000',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(express.json());
 
-// Helper function to sanitize filename
+// Helper function to sanitize filename and add timestamp
 const sanitizeFilename = (filename) => {
-  return filename.replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim();
+  const date = new Date();
+  const timestamp = date.toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/[T.]/g, '_')
+    .slice(0, 15); // Gets YYYYMMDD_HHMMSS
+  return `${timestamp}_${filename.replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim()}`;
 };
 
 // Get video information endpoint
@@ -53,8 +65,9 @@ app.post('/api/download-audio', async (req, res) => {
   try {
     const info = await ytdl.getInfo(url);
     const title = sanitizeFilename(info.videoDetails.title);
+    const encodedTitle = encodeURIComponent(title);
     
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedTitle}.mp3`);
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
@@ -91,8 +104,9 @@ app.post('/api/download-video', async (req, res) => {
   try {
     const info = await ytdl.getInfo(url);
     const title = sanitizeFilename(info.videoDetails.title);
+    const encodedTitle = encodeURIComponent(title);
     
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp4"`);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedTitle}.mp4`);
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
