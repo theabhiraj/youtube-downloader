@@ -14,9 +14,7 @@ const port = 3001;
 
 // Configure CORS for production
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] // Replace with your frontend domain
-    : 'http://localhost:3000',
+  origin: ['https://theabhiraj.github.io', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
   credentials: true
 }));
@@ -40,6 +38,7 @@ app.post('/api/video-info', async (req, res) => {
   }
 
   try {
+    console.log('Fetching info for URL:', url);
     const info = await ytdl.getInfo(url);
     const videoDetails = info.videoDetails;
     
@@ -52,7 +51,11 @@ app.post('/api/video-info', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching video info:', error);
-    res.status(500).json({ error: 'Failed to fetch video information.' });
+    console.error('Error details:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch video information.',
+      details: error.message 
+    });
   }
 });
 

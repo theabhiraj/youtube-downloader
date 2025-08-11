@@ -68,7 +68,8 @@ function App() {
       });
       setSuccessMessage('Video information loaded successfully!');
     } catch (e) {
-      setError('Failed to fetch video information. Please check the URL and try again.');
+      const errorMessage = e.response?.data?.details || e.message;
+      setError(`Failed to fetch video information: ${errorMessage}`);
       console.error('Video info fetch error:', e);
     }
     setIsLoading(false);
