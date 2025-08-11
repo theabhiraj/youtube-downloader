@@ -5,6 +5,21 @@ const ytdl = require('@distube/ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegStatic = require('ffmpeg-static');
 
+// Retry logic for YouTube requests
+const getVideoInfoWithRetry = async (url, maxRetries = 3, delay = 1000) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ytdl.getInfo(url);
+    } catch (error) {
+      if (error.statusCode === 429 && i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+};
+
 // Set FFmpeg path to the bundled static binary
 console.log('FFmpeg static path:', ffmpegStatic);
 ffmpeg.setFfmpegPath(ffmpegStatic);
@@ -39,7 +54,7 @@ app.post('/api/video-info', async (req, res) => {
 
   try {
     console.log('Fetching info for URL:', url);
-    const info = await ytdl.getInfo(url);
+    const info = await getVideoInfoWithRetry(url);
     const videoDetails = info.videoDetails;
     
     res.json({
@@ -66,7 +81,7 @@ app.post('/api/download-audio', async (req, res) => {
   }
 
   try {
-    const info = await ytdl.getInfo(url);
+    const info = await getVideoInfoWithRetry(url);
     const title = sanitizeFilename(info.videoDetails.title);
     const encodedTitle = encodeURIComponent(title);
     
@@ -105,7 +120,7 @@ app.post('/api/download-video', async (req, res) => {
   }
 
   try {
-    const info = await ytdl.getInfo(url);
+    const info = await getVideoInfoWithRetry(url);
     const title = sanitizeFilename(info.videoDetails.title);
     const encodedTitle = encodeURIComponent(title);
     
